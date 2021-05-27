@@ -149,12 +149,12 @@ figure,surf(doppler_axis,range_axis,RDM);
 %--------------
 % CFAR params
 % the number of Training Cells in both the dimensions.
-Tr = 20; % training cells (range)
-Td = 20; % training cells (dopler)
+Tr = 12; % training cells (range)
+Td = 12; % training cells (dopler)
 
 %Select the number of Guard Cells in both dimensions around the Cell under
-Gr = 4;  % number of Guard Cells (range)
-Gd = 4;  % number of Guard Cells (dopler)
+Gr = 6;  % number of Guard Cells (range)
+Gd = 6;  % number of Guard Cells (dopler)
 offset = 5 % offset the threshold by SNR value in dB
 %--------------
 
@@ -182,9 +182,9 @@ for i = Tr+Gr+1:Nr/2-(Tr+Gr)
         % size(util(util > 0))(0) == training_cells_nbr % a sanity check of
         % training cells nbr
 
-        % Sum convert the value from logarithmic to linear using db2pow
-        % function. Average the summed values for all of the training
-        %cells used and convert it back to logarithimic using pow2db.
+        % Sum converted the values from logarithmic to linear using db2pow.
+        % Average the summed values for all of the training
+        % cells used and convert it back to logarithmic using pow2db.
         noise_level =  pow2db(sum(db2pow(util(util > 0))) / training_cells_nbr);
 
         % Add the offset to it to determine the threshold
