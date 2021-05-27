@@ -1,7 +1,7 @@
 clear all
 clc;
 
-%% Radar Specifications 
+%% Radar Specifications
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Frequency of operation = 77GHz
 % Max Range = 200m
@@ -25,7 +25,7 @@ v=10 % vehicle velocity
 
 %% FMCW Waveform Generation
 
-%Design the FMCW waveform by giving the specs of each of its parameters.
+% Design the FMCW waveform by giving the specs of each of its parameters.
 % Calculate the Bandwidth (B), Chirp Time (Tchirp) and Slope (slope) of the FMCW
 % chirp using the requirements above.
 
@@ -33,15 +33,14 @@ B = c/(2*rangeRes);
 Tchirp = 5.5*2*maxRange/c; % sweep time
 slope = B/Tchirp;
 
-%Operating carrier frequency of Radar 
+%Operating carrier frequency of Radar
 fc= 77e9;             %carrier freq
 
-                                                          
 %The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT
-%for Doppler Estimation. 
+%for Doppler Estimation.
 Nd=128;                   % #of doppler cells OR #of sent periods % number of chirps
 
-%The number of samples on each chirp. 
+%The number of samples on each chirp.
 Nr=1024;                  %for length of time OR # of range cells
 
 % Timestamp for running the displacement scenario for every sample on each
@@ -60,25 +59,24 @@ td=zeros(1,length(t));
 
 
 %% Signal generation and Moving Target simulation
-% Running the radar scenario over the time. 
+% Running the radar scenario over the time.
 
 
-for i=1:length(t)         
-    
-    %For each time stamp update the Range of the Target for constant velocity. 
+for i=1:length(t)
+    %For each time stamp update the Range of the Target for constant velocity.
     r_t(i) = R_init + (t(i)*v);
     td(i) = t(i) - (2*r_t(i)/c);
-    
+
     %For each time sample we need update the transmitted and
-    %received signal. 
+    %received signal.
     Tx(i) = cos(2*pi*(fc*t(i) + (slope * (t(i)^2)/2)));
     Rx (i)  = cos(2*pi*(fc*td(i) + (slope * (td(i)^2)/2)));
-    
+
     %Now by mixing the Transmit and Receive generate the beat signal
     %This is done by element wise matrix multiplication of Transmit and
     %Receiver Signal
     Mix(i) = Tx(i)*Rx(i);
-    
+
 end
 
 
@@ -107,7 +105,7 @@ sig_fft = sig_fft(1:Nr/2);
 figure ('Name','Range from First FFT')
 subplot(2,1,1)
 
- % plot FFT output 
+ % plot FFT output
 plot(sig_fft)
 axis ([0 200 0 1]);
 
@@ -154,7 +152,7 @@ figure,surf(doppler_axis,range_axis,RDM);
 Tr = 20; % training cells (range)
 Td = 20; % training cells (dopler)
 
-%Select the number of Guard Cells in both dimensions around the Cell under 
+%Select the number of Guard Cells in both dimensions around the Cell under
 Gr = 4;  % number of Guard Cells (range)
 Gd = 4;  % number of Guard Cells (dopler)
 offset = 5 % offset the threshold by SNR value in dB
@@ -164,7 +162,7 @@ training_cells_nbr = (2*(Tr+Gr)+1)*(2*(Td+Gd)+1) - ((2*Gr+1)*(2*Gd+1));  % Get o
 
 output = zeros(size(RDM));
 
-% The process below generate a thresholded block, which is smaller 
+% The process below generate a thresholded block, which is smaller
 % than the Range Doppler Map as the CUT cannot be located at the edges of
 % matrix. Hence,few cells will not be thresholded.
 
@@ -176,20 +174,20 @@ output = zeros(size(RDM));
 for i = Tr+Gr+1:Nr/2-(Tr+Gr)
     for j = Td+Gd+1:Nd-(Td+Gd)
         %Slide Window through the complete Range Doppler Map
-        TGCrop = RDM(i-(Gr+Tr):i+Gr+Tr, j-(Gd+Td):j+Gd+Td); % T + G + cut a context crop 
+        TGCrop = RDM(i-(Gr+Tr):i+Gr+Tr, j-(Gd+Td):j+Gd+Td); % T + G + cut a context crop
         GCrop = zeros(size(TGCrop));
         GCrop(Tr+1:Tr+2*Gr+1, Td+1:Td+2*Gd+1) = RDM(i-Gr:i+Gr,j-Gd:j+Gd); % G + cut crop
-        
+
         util = TGCrop - GCrop; % Extracts util region (Training cells)
         % size(util(util > 0))(0) == training_cells_nbr % a sanity check of
         % training cells nbr
-        
+
         % Sum convert the value from logarithmic to linear using db2pow
         % function. Average the summed values for all of the training
         %cells used and convert it back to logarithimic using pow2db.
         noise_level =  pow2db(sum(db2pow(util(util > 0))) / training_cells_nbr);
-        
-        % Add the offset to it to determine the threshold 
+
+        % Add the offset to it to determine the threshold
         % If the CUT level > threshold assign it a value of 1, else equate it to 0.
         output(i, j) = (RDM(i, j) > (noise_level + offset));
     end
@@ -199,7 +197,3 @@ end
 %Doppler Response output.
 figure,surf(doppler_axis,range_axis,output);
 colorbar;
-
-
- 
- 
